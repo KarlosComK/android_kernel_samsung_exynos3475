@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: cm-14.1
       - name: Install dependencies
         run: |
           export DEBIAN_FRONTEND=noninteractive
