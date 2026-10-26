@@ -63,7 +63,7 @@ jobs:
           
       - name: Package Anykernel3
         run: |
-          git clone --depth=1 https://github.com/KarlosComK/AnyKernel3-for-3475Kernel anykernel
+          git clone --depth=1 https://github.com/KarlosComK/AnyKernel2 anykernel
           cd anykernel
           rm -f zImage zImage-dtb Image Image.gz *.dtb
 
@@ -77,31 +77,6 @@ jobs:
           fi
 
           cp ../out/arch/${KERNEL_ARCH}/boot/dtb*.img . 2>/dev/null || echo "No DTB files"
-
-          cat > anykernel.sh << 'EOF'
-          properties() { '
-          kernel.string=3475Kernel for j2lte by CarlosComC on XDA
-          do.devicecheck=1
-          device.name1=j2lte
-          device.name2=J200BT
-          device.name3=J200G
-          device.name4=J200F
-          device.name5=J200M
-          device.name6=j2lteub
-          do.modules=0
-          do.systemless=1
-          do.cleanup=1
-          do.cleanuponabort=0
-          '; }
-
-          BLOCK=/dev/block/platform/13540000.dwmmc0/by-name/BOOT;
-          IS_SLOT_DEVICE=0;
-          RAMDISK_COMPRESSION=auto;
-
-          . tools/ak3-core.sh
-          dump_boot;
-          write_boot;
-          EOF
 
           zip -r9 "../3475Kernel-${{ github.sha }}.zip" * -x .git README.md *placeholder
 
