@@ -3,7 +3,7 @@ name: Compile 3475-Kernel
 on:
   push:
     branches:
-    - lineage-17.1
+    - cm-14.1
   workflow_dispatch:
 
 env:
@@ -96,9 +96,9 @@ jobs:
           do.cleanuponabort=0
           '; }
 
-          block=/dev/block/platform/13540000.dwmmc0/by-name/BOOT;
-          is_slot_device=0;
-          ramdisk_compression=auto;
+          BLOCK=/dev/block/platform/13540000.dwmmc0/by-name/BOOT;
+          IS_SLOT_DEVICE=0;
+          RAMDISK_COMPRESSION=auto;
 
           . tools/ak3-core.sh
           dump_boot;
@@ -114,7 +114,6 @@ jobs:
           path: 3475Kernel-${{ github.sha }}.zip
           archive: false
           retention-days: 30
-          compression-level: 0
 
       - name: Upload build log
         uses: actions/upload-artifact@v4
