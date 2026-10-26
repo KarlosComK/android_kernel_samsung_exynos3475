@@ -54,6 +54,10 @@ jobs:
           echo "Building 3475-kernel..."
           mkdir -p out/security/tima_uevent
           make -j$(nproc) \
+          HOSTCFLAGS="-fcommon" \
+          HOSTLDFLAGS="-fcommon" \
+          KCFLAGS="-Wno-error" \
+          CONFIG_WERROR=n \
           O=out \
           2>&1 | tee build.log
           
