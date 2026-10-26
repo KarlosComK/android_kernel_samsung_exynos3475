@@ -1,0 +1,124 @@
+name: Compile 3475-Kernel
+
+on:
+  push:
+    branches:
+    - cm-14.1
+  workflow_dispatch:
+
+env:
+  KERNEL_DEFCONFIG: "lineage-j2lte_defconfig"
+  KERNEL_ARCH: "arm"
+  KBUILD_BUILD_USER: "github-actions"
+  KBUILD_BUILD_HOST: "ci-server"
+  
+jobs:
+  build_and_package:
+    name: Build kernel & Package Anykernel3
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
+          sudo apt-get install -y bc bison flex build-essential libssl-dev libelf-dev cpio kmod git zip curl ca-certificates jq \
+            wget libffi-dev zlib1g-dev libreadline-dev libsqlite3-dev libbz2-dev libncurses5-dev libgdbm-dev liblzma-dev tk-dev
+            
+      - name: Configure git
+        run: |
+          git config --global http.sslVerify false
+          git config --global url."https://".insteadOf git://
+
+      - name: Clone LineageOS GCC toolchain
+        run: |
+          echo "Cloning GCC ARM32..."
+          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git /tmp/gcc-arm
+
+      - name: Verify toolchain
+        run: |
+          /tmp/gcc-arm/bin/arm-linux-androideabi-gcc --version
+
+      - name: Build kernel
+        run: |
+          export PATH="/tmp/gcc-arm/bin:${PATH}"
+          export ARCH=${KERNEL_ARCH}
+          export CROSS_COMPILE="arm-linux-androideabi-"
+          export HOSTCFLAGS="-fcommon"
+          export HOSTLDFLAGS="-fcommon"
+
+          mkdir -p out
+
+          make O=out ${KERNEL_DEFCONFIG}
+
+          echo "Building Five-kernel..."
+          mkdir -p out/security/tima_uevent
+          make -j$(nproc) \
+          HOSTCFLAGS="-fcommon" \
+          HOSTLDFLAGS="-fcommon" \
+          KCFLAGS="-Wno-error" \
+          CONFIG_WERROR=n \
+          O=out \
+          2>&1 | tee build.log
+          
+      - name: Package Anykernel3
+        run: |
+          git clone --depth=1 https://github.com/KarlosComK/AnyKernel3-for-3475Kernel anykernel
+          cd anykernel
+          rm -f zImage zImage-dtb Image Image.gz *.dtb
+
+          if [ -f "../out/arch/${KERNEL_ARCH}/boot/zImage" ]; then
+            cp ../out/arch/${KERNEL_ARCH}/boot/zImage zImage
+            echo "✓ Copied zImage"
+          else
+            echo "✗ No kernel image found!"
+            ls -lah ../out/arch/${KERNEL_ARCH}/boot/
+            exit 1
+          fi
+
+          cp ../out/arch/${KERNEL_ARCH}/boot/dtb*.img . 2>/dev/null || echo "No DTB files"
+
+          cat > anykernel.sh << 'EOF'
+          properties() { '
+          kernel.string=3475Kernel for j2lte by CarlosComC on XDA
+          do.devicecheck=1
+          device.name1=j2lte
+          device.name2=J200BT
+          device.name3=J200G
+          device.name4=J200F
+          device.name5=J200M
+          device.name6=j2lteub
+          do.modules=0
+          do.systemless=1
+          do.cleanup=1
+          do.cleanuponabort=0
+          '; }
+
+          BLOCK=/dev/block/platform/13540000.dwmmc0/by-name/BOOT;
+          IS_SLOT_DEVICE=0;
+          RAMDISK_COMPRESSION=auto;
+
+          . tools/ak3-core.sh
+          dump_boot;
+          write_boot;
+          EOF
+
+          zip -r9 "../3475Kernel-${{ github.sha }}.zip" * -x .git README.md *placeholder
+
+      - name: Upload AnyKernel package
+        uses: actions/upload-artifact@v4
+        with:
+          name: 3475Kernel
+          path: 3475Kernel-${{ github.sha }}.zip
+          archive: false
+          retention-days: 30
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log-${{ github.sha }}
+          path: ${{ github.workspace}}/build.log
+          retention-days: 7
