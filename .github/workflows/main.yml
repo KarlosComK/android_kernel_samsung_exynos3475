@@ -61,9 +61,9 @@ jobs:
           O=out \
           2>&1 | tee build.log
           
-      - name: Package Anykernel3
+      - name: Package Anykernel2
         run: |
-          git clone --depth=1 https://github.com/KarlosComK/AnyKernel2 anykernel
+          git clone --depth=1 https://github.com/KarlosComK/AnyKernel2-for-3475Kernel
           cd anykernel
           rm -f zImage zImage-dtb Image Image.gz *.dtb
 
@@ -78,7 +78,7 @@ jobs:
 
           cp ../out/arch/${KERNEL_ARCH}/boot/dtb*.img . 2>/dev/null || echo "No DTB files"
 
-          zip -r9 "../3475Kernel-${{ github.sha }}.zip" * -x .git README.md *placeholder
+          zip -r9 "../3475Kernel-${{ github.sha }}.zip" * -x .git README.md
 
       - name: Upload AnyKernel package
         uses: actions/upload-artifact@v4
