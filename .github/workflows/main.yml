@@ -63,7 +63,7 @@ jobs:
           
       - name: Package Anykernel2
         run: |
-          git clone --depth=1 https://github.com/KarlosComK/AnyKernel2-for-3475Kernel
+          git clone --depth=1 https://github.com/KarlosComK/AnyKernel2-for-3475Kernel anykernel
           cd anykernel
           rm -f zImage zImage-dtb Image Image.gz *.dtb
 
