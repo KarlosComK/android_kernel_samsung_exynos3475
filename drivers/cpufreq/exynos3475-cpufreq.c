@@ -231,7 +231,7 @@ static void __init set_volt_table(void)
 			exynos3475_volt_table[i] = asv_volt;
 
 		if (i == L0)
-			exynos3475_volt_table[i] += 50000;
+			exynos3475_volt_table[i] += 75000;
 
 		pr_info("CPUFREQ: L%d : %d uV\n", i,
 				exynos3475_volt_table[i]);
